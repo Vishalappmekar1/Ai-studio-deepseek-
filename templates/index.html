@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Model Grader</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; background: #f9f9f9; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.5rem; border: 1px solid #ccc; }
+        th { background: #eee; }
+        .success { color: green; }
+        .fail { color: red; }
+        input, select, button { padding: 0.5rem; margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <h1>🧠 AI Model Grader</h1>
+    <form method="POST">
+        <label>Choose task:</label>
+        <select name="task">
+            <option value="ipv4">IPv4 Validator</option>
+            <option value="roman">Roman to Integer</option>
+            <option value="prime">Prime Check</option>
+            <option value="sort">Sort List</option>
+        </select><br>
+        <label>Enter input:</label><br>
+        <input type="text" name="input_text" style="width: 60%;" required>
+        <button type="submit">Test</button>
+    </form>
+
+    {% if custom_result %}
+    <h3>🔍 Custom Result</h3>
+    <p><strong>Input:</strong> {{ custom_result.input }}</p>
+    <p><strong>GPT-4 Output:</strong> {{ custom_result.gpt4 }}</p>
+    <p><strong>DeepSeek Output:</strong> {{ custom_result.deepseek }}</p>
+    {% endif %}
+
+    <h2>📊 Automated Test Results</h2>
+    <table>
+        <thead>
+            <tr><th>Task</th><th>Model</th><th>Input</th><th>Expected</th><th>Output</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+        {% for row in results %}
+            <tr>
+                <td>{{ row.task }}</td>
+                <td>{{ row.model }}</td>
+                <td>{{ row.input }}</td>
+                <td>{{ row.expected }}</td>
+                <td>{{ row.output }}</td>
+                <td class="{{ 'success' if row.status=='✅' else 'fail' }}">{{ row.status }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
