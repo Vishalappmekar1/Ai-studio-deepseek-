@@ -1,102 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>🧠 AI Model Grader – GPT-4 vs DeepSeek</title>
+  <title>🧠 AI Model Grader</title>
   <style>
-    body { font-family: sans-serif; background: #f2f2f2; padding: 2rem; }
+    body { font-family: sans-serif; margin: 2rem; background: #f9f9f9; }
     h1 { color: #333; }
-    input, select, button {
-      padding: 8px;
-      font-size: 16px;
-      margin-right: 10px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 2rem;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.5rem; border: 1px solid #ccc; }
+    th { background: #eee; }
     .success { color: green; }
     .fail { color: red; }
+    input, select, button { padding: 0.5rem; margin: 0.5rem 0; }
   </style>
 </head>
 <body>
+  <h1>🧠 AI Model Grader (Static)</h1>
 
-<h1>🧠 AI Model Grader (Static)</h1>
+  <form onsubmit="runTest(); return false;">
+    <label>Choose task:</label>
+    <select id="task">
+      <option value="ipv4">IPv4 Validator</option>
+      <option value="roman">Roman to Integer</option>
+      <option value="prime">Prime Check</option>
+      <option value="sort">Sort List</option>
+    </select><br>
 
-<form onsubmit="runTest(); return false;">
-  <label for="task">Task:</label>
-  <select id="task">
-    <option value="ipv4">IPv4 Validation</option>
-    <option value="roman">Roman to Integer</option>
-  </select>
+    <label>Enter input:</label><br>
+    <input type="text" id="input_text" style="width: 60%;" required>
+    <button type="submit">Test</button>
+  </form>
 
-  <input type="text" id="userInput" placeholder="Enter input..." required>
-  <button type="submit">Run Test</button>
-</form>
+  <div id="custom_result"></div>
 
-<div id="result" style="margin-top: 20px;"></div>
+  <h2>📊 Test Results</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Task</th><th>Model</th><th>Input</th><th>Expected</th><th>Output</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="results_table">
+    </tbody>
+  </table>
 
-<table id="resultsTable">
-  <thead>
-    <tr>
-      <th>Task</th>
-      <th>Model</th>
-      <th>Input</th>
-      <th>Expected</th>
-      <th>Output</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <script>
+    function runTest() {
+      const task = document.getElementById("task").value;
+      const input = document.getElementById("input_text").value.trim();
+      const tbody = document.getElementById("results_table");
+      tbody.innerHTML = "";
 
-<script>
-  function runTest() {
-    const task = document.getElementById("task").value;
-    const input = document.getElementById("userInput").value.trim();
-    const tableBody = document.querySelector("#resultsTable tbody");
-    tableBody.innerHTML = "";
+      let expected = "N/A", gpt4 = "", deepseek = "";
 
-    let expected, gpt4_output, deepseek_output;
-
-    if (task === "ipv4") {
-      expected = /^[0-9]{1,3}(\.[0-9]{1,3}){3}$/.test(input) &&
-                 input.split('.').every(n => Number(n) >= 0 && Number(n) <= 255);
-      gpt4_output = expected;
-      deepseek_output = expected;
-    }
-
-    if (task === "roman") {
-      const romanMap = {I:1,V:5,X:10,L:50,C:100,D:500,M:1000};
-      let total = 0, prev = 0;
-      for (let i = input.length - 1; i >= 0; i--) {
-        const curr = romanMap[input[i]] || 0;
-        total += curr >= prev ? curr : -curr;
-        prev = curr;
+      if (task === "ipv4") {
+        const parts = input.split(".");
+        const valid = parts.length === 4 && parts.every(p => /^\d+$/.test(p) && Number(p) >= 0 && Number(p) <= 255);
+        expected = valid;
+        gpt4 = valid;
+        deepseek = valid;
       }
-      expected = total;
-      gpt4_output = total;
-      deepseek_output = total;
+
+      else if (task === "roman") {
+        const map = {I:1, V:5, X:10, L:50, C:100, D:500, M:1000};
+        let total = 0, prev = 0;
+        for (let i = input.length - 1; i >= 0; i--) {
+          const val = map[input[i]] || 0;
+          total += val < prev ? -val : val;
+          prev = val;
+        }
+        expected = total;
+        gpt4 = total;
+        deepseek = total;
+      }
+
+      else if (task === "prime") {
+        const n = parseInt(input);
+        let isPrime = n > 1 && [...Array(n).keys()].slice(2).every(i => n % i !== 0);
+        expected = isPrime;
+        gpt4 = isPrime;
+        deepseek = isPrime;
+      }
+
+      else if (task === "sort") {
+        try {
+          const arr = JSON.parse(input);
+          if (!Array.isArray(arr)) throw "Invalid";
+          expected = [...arr].sort((a, b) => a - b);
+          gpt4 = expected;
+          deepseek = expected;
+        } catch {
+          expected = "Invalid input";
+          gpt4 = "Invalid input";
+          deepseek = "Invalid input";
+        }
+      }
+
+      const row1 = `<tr><td>${task}</td><td>GPT-4</td><td>${input}</td><td>${expected}</td><td>${gpt4}</td><td class="${gpt4 == expected ? 'success' : 'fail'}">${gpt4 == expected ? '✅' : '❌'}</td></tr>`;
+      const row2 = `<tr><td>${task}</td><td>DeepSeek</td><td>${input}</td><td>${expected}</td><td>${deepseek}</td><td class="${deepseek == expected ? 'success' : 'fail'}">${deepseek == expected ? '✅' : '❌'}</td></tr>`;
+      tbody.innerHTML = row1 + row2;
+
+      document.getElementById("custom_result").innerHTML = `
+        <h3>🔍 Custom Input Result</h3>
+        <p><strong>GPT-4:</strong> ${gpt4}</p>
+        <p><strong>DeepSeek:</strong> ${deepseek}</p>
+      `;
     }
-
-    const status = (a, b) => a === b ? "✅" : "❌";
-
-    const row1 = `<tr>
-      <td>${task}</td><td>GPT-4</td><td>${input}</td><td>${expected}</td><td>${gpt4_output}</td><td class="${status(gpt4_output, expected) === '✅' ? 'success' : 'fail'}">${status(gpt4_output, expected)}</td>
-    </tr>`;
-    const row2 = `<tr>
-      <td>${task}</td><td>DeepSeek</td><td>${input}</td><td>${expected}</td><td>${deepseek_output}</td><td class="${status(deepseek_output, expected) === '✅' ? 'success' : 'fail'}">${status(deepseek_output, expected)}</td>
-    </tr>`;
-
-    tableBody.innerHTML += row1 + row2;
-  }
-</script>
-
+  </script>
 </body>
 </html>
