@@ -76,3 +76,7 @@ def index():
 if __name__ == "__main__":
     app.run(debug=True)
       
+cd AI_Model_Grader             # अपने प्रोजेक्ट फोल्डर में जाएँ
+git add .                      # सारे फाइल्स stage करें
+git commit -m "🚀 Updated model_outputs + GPT-4 logic"
+git push origin main           # GitHub पर भेजें
